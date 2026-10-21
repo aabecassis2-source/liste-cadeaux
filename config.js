@@ -1,19 +1,11 @@
-/* ============================================================
-   CONFIGURATION — à remplir une seule fois (voir README.md)
-   Tant que ces champs sont vides, le site fonctionne en
-   « mode démo » : les données restent dans votre navigateur.
-   ============================================================ */
 window.LISTE_CONFIG = {
-  // Collez ici l'objet "firebaseConfig" fourni par Firebase (étape 5 du README)
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyAxUSZNs6ZjBLnJdSS3V-xqCj6XR0gXYCU",
+    authDomain: "liste-cadeaux-13970.firebaseapp.com",
+    projectId: "liste-cadeaux-13970",
+    storageBucket: "liste-cadeaux-13970.firebasestorage.app",
+    messagingSenderId: "1047199011964",
+    appId: "1:1047199011964:web:8cbcde672506ba0d4aa5f9"
   },
-
-  // L'e-mail du compte administrateur créé dans Firebase (étape 3)
-  adminEmail: ""
+  adminEmail: "alexandre_abecassis@hotmail.com"
 };
