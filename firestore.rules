@@ -1,0 +1,58 @@
+rules_version = '2';
+// Règles de sécurité de la liste de cadeaux.
+// ⚠️ Remplacez admin@exemple.fr par l'e-mail de votre compte administrateur (en minuscules).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == 'admin@exemple.fr';
+    }
+    function signedIn() { return request.auth != null; }
+    function giftPath(id) { return /databases/$(database)/documents/gifts/$(id); }
+
+    // Contenu de la liste : lisible par tous, modifiable par l'admin uniquement
+    match /meta/{docId}   { allow read: if true; allow write: if isAdmin(); }
+    match /gifts/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /brands/{id}    { allow read: if true; allow write: if isAdmin(); }
+    match /images/{id}    { allow read: if true; allow write: if isAdmin(); }
+
+    // Réservations : un document par exemplaire ("<idCadeau>_<n°>") → impossible de réserver deux fois le même
+    match /reservations/{rid} {
+      allow read: if true;
+      allow create: if isAdmin() || (signedIn()
+        && request.resource.data.keys().hasOnly(['giftId', 'slot', 'uid', 'name', 'date'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.slot is int
+        && request.resource.data.slot >= 0
+        && rid == request.resource.data.giftId + '_' + string(request.resource.data.slot)
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && exists(giftPath(request.resource.data.giftId))
+        && request.resource.data.slot < get(giftPath(request.resource.data.giftId)).data.quantity);
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // Petits mots laissés lors d'une réservation : visibles par l'admin seulement
+    match /messages/{rid} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'text'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string && request.resource.data.text.size() <= 300;
+      allow read, update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // Favoris : un document par visiteur et par élément
+    match /likes/{lid} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['type', 'itemId', 'uid'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.type in ['gifts', 'brands']
+        && lid == request.resource.data.type + '_' + request.resource.data.itemId + '_' + request.auth.uid;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+  }
+}
